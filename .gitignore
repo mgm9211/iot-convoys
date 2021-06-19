@@ -130,3 +130,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .idea
+
+
+.migrations/
+dashboard_convoys/__pycache__/*
