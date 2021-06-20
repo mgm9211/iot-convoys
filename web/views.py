@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 import paho.mqtt.client as mqtt
 from plotly.offline import plot
-from plotly.graph_objs import Scatter
+import plotly.graph_objs as go
 
 from web.mqtt_functions import connection, on_message
 
@@ -27,14 +27,46 @@ def index(request):
 
     connect_mqtt()
 
-    master_temperature = Information.objects.filter(device=device_master).values('temperature', 'timestamp')
+    slave_master_1 = Device.objects.get(name='maria')
+    master_temperature = Information.objects.filter(device=device_master).values('temp', 'hum', 'timestamp')
+    slave_temperature = Information.objects.filter(device=slave_master_1).values('temp', 'timestamp')
+    print('--------- slave_temperature', slave_temperature)
+    print('--------- master_temperature', master_temperature)
     print('---------', master_temperature)
-    x_data = [0, 1, 2, 3]
-    y_data = [x ** 2 for x in x_data]
-    plot_div = plot([Scatter(x=x_data, y=y_data,
-                             mode='lines', name='test',
-                             opacity=0.8, marker_color='green')],
-                    output_type='div')
+
+    # Gráfica Máster
+    x_master_data = []
+    y_temp_master_data = []
+    y_hum_master_data = []
+
+    for data in master_temperature:
+        x_master_data.append(data['timestamp'])
+        y_temp_master_data.append(data['temp'])
+        y_hum_master_data.append(data['hum'])
+
+
+    # Gráfica Slave 1
+    x_slave_1_data = []
+    y_temp_slave_1_data = []
+    y_hum_slave_1_data = []
+    for data in slave_temperature:
+        x_slave_1_data.append(data['timestamp'])
+        y_temp_slave_1_data.append(data['temp'])
+        # y_hum_slave_1_data.append(data['hum'])
+
+    # Gráfica de temperatura
+    fig = go.Figure()
+    scatter = go.Scatter(x=x_master_data, y=y_temp_master_data,
+                         mode='lines', name='master',
+                         opacity=0.8, marker_color='red')
+    fig.add_trace(scatter)
+    scatter2 = go.Scatter(x=x_slave_1_data, y=y_temp_slave_1_data,
+                          mode='lines', name='slave1',
+                          opacity=0.8, marker_color='blue')
+    fig.add_trace(scatter2)
+    fig.layout.template = 'plotly_dark'
+    plot_div = plot(fig, output_type='div')
+
     context['plot_div'] = plot_div
 
     context['username'] = request.session.get('username')

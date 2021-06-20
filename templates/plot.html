@@ -1,14 +1,12 @@
-<div class="content">
-            <div class="container-fluid">
-            <div class="row">
-                <h1>Holi, imprimimos gráfica</h1>
-            </div>
-                <div class="row">
-
-  {% autoescape off %}
-  {{ plot_div }}
-  {% endautoescape %}
-
-                </div>
-            </div>
-</div>
+{#<div class="content">#}
+{#    <div class="container-fluid">#}
+        <div class="row text-center">
+            <h5>Información de la temperatura y humedad</h5>
+        </div>
+        <div class="row">
+          {% autoescape off %}
+            {{ plot_div }}
+          {% endautoescape %}
+        </div>
+{#    </div>#}
+{#</div>#}
