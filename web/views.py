@@ -15,8 +15,14 @@ def index(request):
     context = {}
     context['page_active'] = 'index'
 
-    global connected, clientMQTT
+    connect_mqtt()
 
+    context['username'] = request.session.get('username')
+    return render(request, "dashboard.html", context)
+
+
+def connect_mqtt():
+    global connected, clientMQTT
     if not connected:
         # Defining MQTT Client, using paho library
         clientMQTT = mqtt.Client()
@@ -31,9 +37,6 @@ def index(request):
         clientMQTT.on_message = on_message
         # Set connected flag to True to avoid create a connection every time user refresh the web
         connected = True
-
-    context['username'] = request.session.get('username')
-    return render(request, "dashboard.html", context)
 
 
 def devices(request):
@@ -51,11 +54,14 @@ def devices(request):
             if 'is_master' in request.POST and request.POST['is_master']:
                 Device.objects.all().update(is_master=False)
                 is_master = True
-
             if Device.objects.filter(name=name).exists():
                 Device.objects.filter(name=name).update(is_master=is_master)
             else:
                 Device.objects.create(name=name, is_master=is_master)
+                global clientMQTT
+                connect_mqtt()
+                topic = 'conviot/' + name + '/*'
+                clientMQTT.subscribe(topic)
         redirect('devices')
     return render(request, "devices.html", context)
 

@@ -1,4 +1,6 @@
-import json
+import json, re, datetime
+from web.models import Device, Information
+
 
 def connection(client, userdata, flags, rc):
     """
@@ -23,18 +25,20 @@ def on_message(client, userdata, msg):
     """
     received_message = json.loads(msg.payload)
     topic = msg.topic
-    # {'Data': '27.07;44.00;36.715820;-4.624558', 'Timestamp': 10002, 'ID': 'SoyElMaster'}
-    if 'Data' in received_message:
-        data = received_message['Data'].split(';')
-        temp = float(data[0])
-        hum = float(data[1])
-        lat = float(data[2])
-        lon = float(data[3])
-        print('------Temperatura ', temp, '- hum', hum, '- lat ', lat, '- lon', lon)
-    print('------received_message ', received_message)
-
-
-
+    # conviot / name / data
+    if re.match(r'conviot/[A-Za-z]+/data', topic):
+        data_topic = topic.split('/')
+        device_name = data_topic[1]
+        if Device.objects.filter(name=device_name).exists():
+            device = Device.objects.get(name=device_name)
+            if 'Data' in received_message:
+                data = received_message['Data'].split(';')
+                temp = float(data[0])
+                hum = float(data[1])
+                lat = float(data[2])
+                lon = float(data[3])
+            now = datetime.datetime.now()
+            Information.objects.create(device=device, temp=temp, hum=hum, lat=lat, lon=lon, timestamp=now)
 
 
 def update_led_mqtt(device, clientMQTT):
