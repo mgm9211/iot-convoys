@@ -1,9 +1,14 @@
 from django.shortcuts import render, redirect
 import paho.mqtt.client as mqtt
+from plotly.offline import plot
+from plotly.graph_objs import Scatter
 
-from web.mqtt_functions import connection, on_message, update_led_mqtt
+from web.mqtt_functions import connection, on_message
 
-from web.models import Device
+from web.models import Device, Information
+
+
+from random import sample
 
 # Create your views here.
 
@@ -15,7 +20,22 @@ def index(request):
     context = {}
     context['page_active'] = 'index'
 
+    device_master = Device.objects.filter(is_master=True).first()
+    context['device_master'] = device_master
+    context['device_slaves'] = Device.objects.filter(is_master=False)
+    context['last_information'] = Information.objects.all().order_by('-timestamp')[:10]
+
     connect_mqtt()
+
+    master_temperature = Information.objects.filter(device=device_master).values('temperature', 'timestamp')
+    print('---------', master_temperature)
+    x_data = [0, 1, 2, 3]
+    y_data = [x ** 2 for x in x_data]
+    plot_div = plot([Scatter(x=x_data, y=y_data,
+                             mode='lines', name='test',
+                             opacity=0.8, marker_color='green')],
+                    output_type='div')
+    context['plot_div'] = plot_div
 
     context['username'] = request.session.get('username')
     return render(request, "dashboard.html", context)

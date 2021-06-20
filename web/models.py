@@ -7,6 +7,9 @@ class Device(models.Model):
     name = models.CharField(max_length=16, blank=True, null=False, unique=True)
     is_master = models.BooleanField()
 
+    def last_record(self):
+        return Information.objects.filter(device=self).last()
+
 
 # {'Data': '27.06;43.00;36.715508;-4.553879', 'Timestamp': 280056, 'ID': 'SoyElMaster'}
 class Information(models.Model):

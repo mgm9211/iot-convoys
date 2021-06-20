@@ -1,3 +1,24 @@
+.color-warning {
+    color: #ff9800;
+}
+
 .color-danger {
     color: red;
+}
+
+.color-success {
+    color: #288c6c;
+}
+
+.color-info {
+    color: #25b1c3;
+}
+
+.margin-top-10px {
+    margin-top: 10px;
+}
+
+.max-width-height-56-px {
+    width: 56px;
+    height: 56px;
 }
