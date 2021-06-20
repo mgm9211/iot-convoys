@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+  <div class="wrapper ">
+    {% include "menu.html" %}
+      <div class="content">
+          <div class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="card">
+                <div class="card-header card-header-primary">
+                  <h4 class="card-title">Registrar Dispositivo</h4>
+                </div>
+                <div class="card-body">
+                  <form method="post">
+                      {% csrf_token %}
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label class="bmd-label-floating">Nombre:</label>
+                          <input type="text" class="form-control" name="name">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="form-check">
+                            <label class="form-check-label">Máster
+                              <input class="form-check-input" type="checkbox" value=True name="is_master">
+                              <span class="form-check-sign">
+                                <span class="check"></span>
+                              </span>
+                            </label>
+                          </div>
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary pull-right">Crear</button>
+                    <div class="clearfix"></div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card card-profile">
+                <div class="card-body">
+                    <div class="card-avatar">
+                        <img class="img" src="{% static 'images/convoy.png' %}" />
+                    </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+            <div class="row">
+                <div class="col-md-12">
+              <div class="card card-plain">
+                <div class="card-header card-header-primary">
+                  <h4 class="card-title mt-0"> Dispositivos Registrados</h4>
+{#                  <p class="card-category"> Here is a subtitle for this table</p>#}
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead class="">
+                        <th>
+                          Name
+                        </th>
+                        <th>
+                          Tipo
+                        </th>
+                        <th class="text-center">
+                          Acciones
+                        </th>
+                      </thead>
+                      <tbody>
+                      {% for device in all_devices %}
+                        <tr>
+                          <td>
+                            {{ device.name }}
+                          </td>
+                          <td>
+                              {% if device.is_master %}
+                                  <span class="text-primary">
+                                    <b>Líder</b>
+                                  </span>
+                              {% else %}
+                                  <b>Subordinado</b>
+                              {% endif %}
+                          </td>
+                            <td class="text-center">
+                                <a href="{% url 'delete-device' device.id %}">
+                                 <i class="material-icons color-danger">delete_forever</i>
+                                </a>
+                            </td>
+                        </tr>
+                      {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+        </div>
+      </div>
+      </div>
+
+
+
+
+{% endblock %}

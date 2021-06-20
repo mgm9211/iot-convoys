@@ -20,4 +20,6 @@ from web import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
+    path('devices', views.devices, name='devices'),
+    path('delete-device/(?P<device_id>)\d+/$', views.delete_device, name='delete-device'),
 ]
