@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('devices', views.devices, name='devices'),
+    path('map', views.map, name='map'),
     path('delete-device/(?P<device_id>)\d+/$', views.delete_device, name='delete-device'),
 ]

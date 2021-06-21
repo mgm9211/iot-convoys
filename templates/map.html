@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+    <div class="wrapper">
+    {% include "menu.html" %}
+        <div class="content">
+            <div class="container-fluid">
+                <h3>Últimas posiciones recibidas</h3>
+                <!--The div element for the map -->
+                <div id="map"></div>
+                <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+                <div class="row">
+                    <div class="row">
+                        <a href="{% url 'map' %}">
+                        <button type="submit" class="btn btn-success pull-right">
+                            <i class="material-icons">update</i> Refrescar Mapa
+                        </button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+    <script>
+        var map;
+        let markers = [];
+        var icon;
+        // Adds a marker to the map and push to the array.
+        function addMarker(locations) {
+          for (var i = 0; i < locations.length; i+=1){
+            console.log(locations[i])
+            const marker = new google.maps.Marker({
+              icon: icon,
+               position: {lat: locations[i][0], lng: locations[i][1]},
+              map: map,
+            });
+            map.setCenter(marker.getPosition());
+            markers.push(marker);
+          }
+          setMapOnAll(map);
+
+        }
+        function initMap() {
+            icon = {
+                url: "{% static 'images/marker.png' %}", // url
+                scaledSize: new google.maps.Size(30, 30)
+            };
+            // Initialize and add the map
+            const uluru = { lat: 36.715098, lng: -4.625631 };
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 14,
+                center: uluru,
+            });
+            buttonPress();
+        }
+        // Sets the map on all markers in the array.
+        function setMapOnAll(map) {
+            for (let i = 0; i < markers.length; i++) {
+                markers[i].setMap(map);
+            }
+        }
+        function buttonPress(){
+            setMapOnAll(null);
+            addMarker({{ locations }});
+        }
+    </script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDjJj6c3tvG4RgS7ZM8vAKlWK8JRd5xhxc&callback=initMap&libraries=&v=weekly"
+      async
+
+    ></script>
+{% endblock extra_js %}

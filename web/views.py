@@ -3,6 +3,8 @@ import paho.mqtt.client as mqtt
 from plotly.offline import plot
 import plotly.graph_objs as go
 
+import time
+
 from web.mqtt_functions import connection, on_message
 
 from web.models import Device, Information
@@ -27,12 +29,7 @@ def index(request):
 
     connect_mqtt()
 
-    slave_master_1 = Device.objects.get(name='maria')
     master_temperature = Information.objects.filter(device=device_master).values('temp', 'hum', 'timestamp')
-    slave_temperature = Information.objects.filter(device=slave_master_1).values('temp', 'timestamp')
-    print('--------- slave_temperature', slave_temperature)
-    print('--------- master_temperature', master_temperature)
-    print('---------', master_temperature)
 
     # Gráfica Máster
     x_master_data = []
@@ -46,30 +43,58 @@ def index(request):
 
 
     # Gráfica Slave 1
-    x_slave_1_data = []
-    y_temp_slave_1_data = []
-    y_hum_slave_1_data = []
-    for data in slave_temperature:
-        x_slave_1_data.append(data['timestamp'])
-        y_temp_slave_1_data.append(data['temp'])
-        # y_hum_slave_1_data.append(data['hum'])
+    slaves_devices = Device.objects.filter(is_master=False)
+    data_slaves_devices = []
+    for slave in slaves_devices:
+        dict_data_slave = {}
+        x_slave_data = []
+        y_temp_slave_data = []
+        y_hum_slave_data = []
+        slave_data = Information.objects.filter(device=slave).values('temp', 'hum', 'timestamp')
+        for data in slave_data:
+            x_slave_data.append(data['timestamp'])
+            y_temp_slave_data.append(data['temp'])
+            y_hum_slave_data.append(data['hum'])
+        dict_data_slave = {
+            'name': slave.name,
+            'x_slave_data': x_slave_data,
+            'y_temp_slave_data': y_temp_slave_data,
+            'y_hum_slave_data': y_hum_slave_data,
+        }
+        data_slaves_devices.append(dict_data_slave)
 
-    # Gráfica de temperatura
-    fig = go.Figure()
-    scatter = go.Scatter(x=x_master_data, y=y_temp_master_data,
-                         mode='lines', name='master',
+
+    # Gráficas de temperatura y humedad
+    fig_temperature = go.Figure()
+    fig_humidity = go.Figure()
+    name_scatter = 'Lider-' + device_master.name
+    name_scatter_2 = 'Lider-' + device_master.name
+    scatter_temperature = go.Scatter(x=x_master_data, y=y_temp_master_data, mode='lines', name=name_scatter,
                          opacity=0.8, marker_color='red')
-    fig.add_trace(scatter)
-    scatter2 = go.Scatter(x=x_slave_1_data, y=y_temp_slave_1_data,
-                          mode='lines', name='slave1',
-                          opacity=0.8, marker_color='blue')
-    fig.add_trace(scatter2)
-    fig.layout.template = 'plotly_dark'
-    plot_div = plot(fig, output_type='div')
+    scatter_humidity = go.Scatter(x=x_master_data, y=y_hum_master_data, mode='lines', name=name_scatter_2,
+                                     opacity=0.8, marker_color='red')
+    fig_temperature.add_trace(scatter_temperature)
+    fig_humidity.add_trace(scatter_humidity)
 
-    context['plot_div'] = plot_div
+    # Gráficas slaves:
+    cont = 1
+    colors = ['blue', 'green', 'orange']
+    for slave in data_slaves_devices:
+       name_scatter = 'Slave-' + slave['name']
+       name_scatter_2 = 'Slave-' + slave['name']
+       fig_temperature.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_temp_slave_data'],
+                             mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
+       fig_humidity.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_hum_slave_data'],
+                             mode='lines', name=name_scatter_2, opacity=0.8, marker_color=colors[cont]))
+       cont+=1
 
-    context['username'] = request.session.get('username')
+    fig_temperature.layout.template = 'plotly_dark'
+    fig_humidity.layout.template = 'plotly_dark'
+    plot_div_temperature = plot(fig_temperature, output_type='div')
+    plot_div_humidity = plot(fig_humidity, output_type='div')
+    context['plot_div_temperature'] = plot_div_temperature
+    context['plot_div_humidity'] = plot_div_humidity
+
     return render(request, "dashboard.html", context)
 
 
@@ -114,8 +139,22 @@ def devices(request):
                 connect_mqtt()
                 topic = 'conviot/' + name + '/*'
                 clientMQTT.subscribe(topic)
-        redirect('devices')
+        return redirect('devices')
     return render(request, "devices.html", context)
+
+
+def map(request):
+    context = {}
+
+    context['page_active'] = 'map'
+
+    locations = []
+    device_master = Device.objects.get(is_master=True)
+    master_locations = Information.objects.filter(device=device_master).values('lat', 'lon')
+    for location in master_locations:
+        locations.append([location['lat'], location['lon']])
+    context['locations'] = locations
+    return render(request, "map.html", context)
 
 
 def delete_device(request, device_id):
