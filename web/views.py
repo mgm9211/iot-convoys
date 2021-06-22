@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
+from datetime import date
+import time
 import paho.mqtt.client as mqtt
 from plotly.offline import plot
 import plotly.graph_objs as go
-import time
 from web.mqtt_functions import connection, on_message
 from web.models import Device, Information
 
@@ -37,11 +38,17 @@ def index(request):
     device_master = Device.objects.filter(is_master=True).first()
     context['device_master'] = device_master
     context['device_slaves'] = Device.objects.filter(is_master=False)
+
+    today = date.today()
+    year = today.year
+    month = today.month
+    day = today.day
     context['last_information'] = Information.objects.all().order_by('-timestamp')[:10]
 
     connect_mqtt()
     send_order(3, 'jose')
-    master_temperature = Information.objects.filter(device=device_master).values('temp', 'hum', 'timestamp')
+    master_temperature = Information.objects.filter(device=device_master, timestamp__year=year, timestamp__month=month,
+                                                            timestamp__day=day).values('temp', 'hum', 'timestamp')
 
     # Gráfica Máster
     x_master_data = []
@@ -62,7 +69,8 @@ def index(request):
         x_slave_data = []
         y_temp_slave_data = []
         y_hum_slave_data = []
-        slave_data = Information.objects.filter(device=slave).values('temp', 'hum', 'timestamp')
+        slave_data = Information.objects.filter(device=slave, timestamp__year=year, timestamp__month=month,
+                                                            timestamp__day=day).values('temp', 'hum', 'timestamp')
         for data in slave_data:
             x_slave_data.append(data['timestamp'])
             y_temp_slave_data.append(data['temp'])
@@ -79,11 +87,13 @@ def index(request):
     # Gráficas de temperatura y humedad
     fig_temperature = go.Figure()
     fig_humidity = go.Figure()
-    name_scatter = 'Lider-' + device_master.name
-    name_scatter_2 = 'Lider-' + device_master.name
+    device_master_name = ''
+    if device_master.name:
+        device_master_name =  device_master.name
+    name_scatter = 'Lider-' + device_master_name
     scatter_temperature = go.Scatter(x=x_master_data, y=y_temp_master_data, mode='lines', name=name_scatter,
                          opacity=0.8, marker_color='red')
-    scatter_humidity = go.Scatter(x=x_master_data, y=y_hum_master_data, mode='lines', name=name_scatter_2,
+    scatter_humidity = go.Scatter(x=x_master_data, y=y_hum_master_data, mode='lines', name=name_scatter,
                                      opacity=0.8, marker_color='red')
     fig_temperature.add_trace(scatter_temperature)
     fig_humidity.add_trace(scatter_humidity)
@@ -91,13 +101,13 @@ def index(request):
     # Gráficas slaves:
     cont = 1
     colors = ['blue', 'green', 'orange']
+
     for slave in data_slaves_devices:
        name_scatter = 'Slave-' + slave['name']
-       name_scatter_2 = 'Slave-' + slave['name']
        fig_temperature.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_temp_slave_data'],
                              mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
        fig_humidity.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_hum_slave_data'],
-                             mode='lines', name=name_scatter_2, opacity=0.8, marker_color=colors[cont]))
+                             mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
        cont+=1
 
     fig_temperature.layout.template = 'plotly_dark'
@@ -160,9 +170,16 @@ def map(request):
 
     context['page_active'] = 'map'
 
+    today = date.today()
+
+    year = today.year
+    month = today.month
+    day = today.day
+
     locations = []
     device_master = Device.objects.get(is_master=True)
-    master_locations = Information.objects.filter(device=device_master).values('lat', 'lon')
+    master_locations = Information.objects.filter(device=device_master, timestamp__year=year, timestamp__month=month,
+                                                            timestamp__day=day).values('lat', 'lon')
     for location in master_locations:
         locations.append([location['lat'], location['lon']])
     context['locations'] = locations
