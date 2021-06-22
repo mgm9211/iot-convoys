@@ -78,14 +78,18 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <div class="row">
-                                                        <button type="submit" class="btn btn-success pull-right">
-                                                            <i class="material-icons">speed</i> Acelerar
-                                                        </button>
+                                                        <a href="{% url 'speed-up' device_master.id %}">
+                                                            <button type="submit" class="btn btn-success pull-right">
+                                                                <i class="material-icons">speed</i> Acelerar
+                                                            </button>
+                                                        </a>
                                                     </div>
                                                     <div class="row">
-                                                        <button type="submit" class="btn btn-warning pull-right">
-                                                            <i class="material-icons">arrow_circle_down</i> Reducir
-                                                        </button>
+                                                        <a href="{% url 'brake' device_master.id %}">
+                                                            <button type="submit" class="btn btn-warning pull-right">
+                                                                <i class="material-icons">arrow_circle_down</i> Reducir
+                                                            </button>
+                                                        </a>
                                                     </div>
                                                     <div class="row margin-top-10px text-center">
                                                         <i class="material-icons">circle</i> Recibido
@@ -142,6 +146,18 @@
                                                         Humedad: <b><span class="color-warning">{{ slave.last_record.hum }} %</span></b>
                                                     </p>
                                                 </div>
+                                                <div class="row item-center-in-row">
+                                                    <a href="{% url 'speed-up' slave.id %}">
+                                                        <button type="submit" class="btn btn-success pull-right">
+                                                            <i class="material-icons">speed</i> Acelerar
+                                                        </button>
+                                                    </a>
+                                                    <a href="{% url 'brake' slave.id %}">
+                                                        <button type="submit" class="btn btn-warning pull-right">
+                                                            <i class="material-icons">arrow_circle_down</i> Reducir
+                                                        </button>
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -181,6 +197,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div>d
     </div>
 {% endblock %}

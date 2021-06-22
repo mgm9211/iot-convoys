@@ -22,5 +22,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('devices', views.devices, name='devices'),
     path('map', views.map, name='map'),
+    path('speed-up/(?P<device_id>)\d+/$', views.speed_up, name='speed-up'),
+    path('brake/(?P<device_id>)\d+/$', views.brake, name='brake'),
     path('delete-device/(?P<device_id>)\d+/$', views.delete_device, name='delete-device'),
 ]

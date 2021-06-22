@@ -186,6 +186,22 @@ def map(request):
     return render(request, "map.html", context)
 
 
+def speed_up(request, device_id):
+    context = {}
+
+    # FUNCION
+
+
+    return redirect('index')
+
+
+def brake(request, device_id):
+    context = {}
+
+    # FUNCION
+
+    return redirect('index')
+
 def delete_device(request, device_id):
     if Device.objects.filter(id=device_id).exists():
         Device.objects.get(id=device_id).delete()
