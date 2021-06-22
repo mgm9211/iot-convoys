@@ -24,5 +24,6 @@ urlpatterns = [
     path('map', views.map, name='map'),
     path('speed-up/(?P<device_id>)\d+/$', views.speed_up, name='speed-up'),
     path('brake/(?P<device_id>)\d+/$', views.brake, name='brake'),
+    path('start/(?P<device_id>)\d+/$', views.start, name='start'),
     path('delete-device/(?P<device_id>)\d+/$', views.delete_device, name='delete-device'),
 ]
