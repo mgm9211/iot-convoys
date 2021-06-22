@@ -2,11 +2,8 @@ from django.shortcuts import render, redirect
 import paho.mqtt.client as mqtt
 from plotly.offline import plot
 import plotly.graph_objs as go
-
 import time
-
 from web.mqtt_functions import connection, on_message
-
 from web.models import Device, Information
 
 
@@ -16,6 +13,21 @@ from random import sample
 
 connected = False
 clientMQTT = None
+
+
+def send_order(order, name):
+    print('Sending order')
+    global clientMQTT
+    connect_mqtt()
+    if order == 1:
+        # Accelerate
+        clientMQTT.publish(topic=f'conviot/{name}/acelera', payload=order, qos=1)
+    elif order == 2:
+        # Brake
+        clientMQTT.publish(topic=f'conviot/{name}/frena', payload=order, qos=1)
+    elif order == 3:
+        # Buzz
+        clientMQTT.publish(topic=f'conviot/{name}/alarma', payload=order, qos=1)
 
 
 def index(request):
@@ -28,7 +40,7 @@ def index(request):
     context['last_information'] = Information.objects.all().order_by('-timestamp')[:10]
 
     connect_mqtt()
-
+    send_order(3, 'jose')
     master_temperature = Information.objects.filter(device=device_master).values('temp', 'hum', 'timestamp')
 
     # Gráfica Máster
