@@ -38,13 +38,13 @@ def on_message(client, userdata, msg):
                 speed = float(data[2])
                 lat = float(data[3])
                 lon = float(data[4])
-
                 master_device = Device.objects.filter(is_master=True).first()
                 last_speed = Information.objects.filter(device=master_device).last().speed
-                if (speed - last_speed) > 20:
-                    client.publish(topic=f'conviot/{device_name}/frena', payload=10, qos=1)
-                elif (last_speed - speed) > 20:
-                    client.publish(topic=f'conviot/{device_name}/acelera', payload=10, qos=1)
+                if device_name != master_device.name:
+                    if (speed - last_speed) > 20:
+                        client.publish(topic=f'conviot/{device_name}/frena', payload=10, qos=1)
+                    elif (last_speed - speed) > 20:
+                        client.publish(topic=f'conviot/{device_name}/acelera', payload=10, qos=1)
 
             now = datetime.datetime.now()
             Information.objects.create(device=device, temp=temp, hum=hum, lat=lat, lon=lon, speed=speed, timestamp=now)

@@ -18,5 +18,5 @@ class Information(models.Model):
     hum = models.FloatField(null=False, blank=True)
     lat = models.FloatField(null=False, blank=True)
     lon = models.FloatField(null=False, blank=True)
-    speed = models.FloatField(null=False, blank=True)
+    speed = models.FloatField(null=False, blank=True, default=0.0)
     timestamp = models.DateTimeField()

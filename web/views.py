@@ -9,6 +9,9 @@ from web.models import Device, Information
 
 from random import sample
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 # Create your views here.
 
 connected = False
@@ -30,11 +33,13 @@ def send_order(order, name):
     elif order == 4:
         # Start Master
         clientMQTT.publish(topic=f'conviot/{name}/start', payload=order, qos=1)
+        clientMQTT.publish(topic=f'conviot/{name}/alarma', payload=order, qos=1)
         # Start Slave 1
         slaves_devices = Device.objects.filter(is_master=False)
         for slave in slaves_devices:
             time.sleep(4)
             clientMQTT.publish(topic=f'conviot/{slave.name}/start', payload=order, qos=1)
+            clientMQTT.publish(topic=f'conviot/{slave.name}/alarma', payload=order, qos=1)
 
 
 
