@@ -7,7 +7,6 @@ import plotly.graph_objs as go
 from web.mqtt_functions import connection, on_message
 from web.models import Device, Information
 
-
 from random import sample
 
 # Create your views here.
@@ -17,18 +16,26 @@ clientMQTT = None
 
 
 def send_order(order, name):
-    print('Sending order')
     global clientMQTT
     connect_mqtt()
     if order == 1:
         # Accelerate
-        clientMQTT.publish(topic=f'conviot/{name}/acelera', payload=order, qos=1)
+        clientMQTT.publish(topic=f'conviot/{name}/acelera', payload=10, qos=1)
     elif order == 2:
         # Brake
-        clientMQTT.publish(topic=f'conviot/{name}/frena', payload=order, qos=1)
+        clientMQTT.publish(topic=f'conviot/{name}/frena', payload=10, qos=1)
     elif order == 3:
         # Buzz
         clientMQTT.publish(topic=f'conviot/{name}/alarma', payload=order, qos=1)
+    elif order == 4:
+        # Start Master
+        clientMQTT.publish(topic=f'conviot/{name}/start', payload=order, qos=1)
+        # Start Slave 1
+        slaves_devices = Device.objects.filter(is_master=False)
+        for slave in slaves_devices:
+            time.sleep(4)
+            clientMQTT.publish(topic=f'conviot/{slave.name}/start', payload=order, qos=1)
+
 
 
 def index(request):
@@ -46,9 +53,8 @@ def index(request):
     context['last_information'] = Information.objects.all().order_by('-timestamp')[:10]
 
     connect_mqtt()
-    send_order(3, 'jose')
     master_temperature = Information.objects.filter(device=device_master, timestamp__year=year, timestamp__month=month,
-                                                            timestamp__day=day).values('temp', 'hum', 'timestamp')
+                                                    timestamp__day=day).values('temp', 'hum', 'timestamp')
 
     # Gráfica Máster
     x_master_data = []
@@ -60,7 +66,6 @@ def index(request):
         y_temp_master_data.append(data['temp'])
         y_hum_master_data.append(data['hum'])
 
-
     # Gráfica Slave 1
     slaves_devices = Device.objects.filter(is_master=False)
     data_slaves_devices = []
@@ -70,7 +75,7 @@ def index(request):
         y_temp_slave_data = []
         y_hum_slave_data = []
         slave_data = Information.objects.filter(device=slave, timestamp__year=year, timestamp__month=month,
-                                                            timestamp__day=day).values('temp', 'hum', 'timestamp')
+                                                timestamp__day=day).values('temp', 'hum', 'timestamp')
         for data in slave_data:
             x_slave_data.append(data['timestamp'])
             y_temp_slave_data.append(data['temp'])
@@ -83,18 +88,17 @@ def index(request):
         }
         data_slaves_devices.append(dict_data_slave)
 
-
     # Gráficas de temperatura y humedad
     fig_temperature = go.Figure()
     fig_humidity = go.Figure()
     device_master_name = ''
     if device_master.name:
-        device_master_name =  device_master.name
+        device_master_name = device_master.name
     name_scatter = 'Lider-' + device_master_name
     scatter_temperature = go.Scatter(x=x_master_data, y=y_temp_master_data, mode='lines', name=name_scatter,
-                         opacity=0.8, marker_color='red')
-    scatter_humidity = go.Scatter(x=x_master_data, y=y_hum_master_data, mode='lines', name=name_scatter,
                                      opacity=0.8, marker_color='red')
+    scatter_humidity = go.Scatter(x=x_master_data, y=y_hum_master_data, mode='lines', name=name_scatter,
+                                  opacity=0.8, marker_color='red')
     fig_temperature.add_trace(scatter_temperature)
     fig_humidity.add_trace(scatter_humidity)
 
@@ -103,12 +107,12 @@ def index(request):
     colors = ['blue', 'green', 'orange']
 
     for slave in data_slaves_devices:
-       name_scatter = 'Slave-' + slave['name']
-       fig_temperature.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_temp_slave_data'],
-                             mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
-       fig_humidity.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_hum_slave_data'],
-                             mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
-       cont+=1
+        name_scatter = 'Slave-' + slave['name']
+        fig_temperature.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_temp_slave_data'],
+                                             mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
+        fig_humidity.add_trace(go.Scatter(x=slave['x_slave_data'], y=slave['y_hum_slave_data'],
+                                          mode='lines', name=name_scatter, opacity=0.8, marker_color=colors[cont]))
+        cont += 1
 
     fig_temperature.layout.template = 'plotly_dark'
     fig_humidity.layout.template = 'plotly_dark'
@@ -179,7 +183,7 @@ def map(request):
     locations = []
     device_master = Device.objects.get(is_master=True)
     master_locations = Information.objects.filter(device=device_master, timestamp__year=year, timestamp__month=month,
-                                                            timestamp__day=day).values('lat', 'lon')
+                                                  timestamp__day=day).values('lat', 'lon')
     for location in master_locations:
         locations.append([location['lat'], location['lon']])
     context['locations'] = locations
@@ -187,20 +191,24 @@ def map(request):
 
 
 def speed_up(request, device_id):
-    context = {}
-
-    # FUNCION
-
-
+    name = Device.objects.filter(id=device_id).first().name
+    send_order(1, name)
+    send_order(3, name)
     return redirect('index')
 
 
 def brake(request, device_id):
-    context = {}
-
-    # FUNCION
-
+    name = Device.objects.filter(id=device_id).first().name
+    send_order(2, name)
+    send_order(3, name)
     return redirect('index')
+
+
+def start(request, device_id):
+    name = Device.objects.filter(id=device_id).first().name
+    send_order(4, name)
+    return redirect('index')
+
 
 def delete_device(request, device_id):
     if Device.objects.filter(id=device_id).exists():
