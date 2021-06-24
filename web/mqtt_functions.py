@@ -39,7 +39,13 @@ def on_message(client, userdata, msg):
                 lat = float(data[3])
                 lon = float(data[4])
                 master_device = Device.objects.filter(is_master=True).first()
-                last_speed = Information.objects.filter(device=master_device).last().speed
+                print(master_device.name)
+                last_info = Information.objects.filter(device=master_device).last()
+                if last_info:
+                    last_speed = last_info.speed
+                else:
+                    last_speed = 120
+
                 if device_name != master_device.name:
                     if (speed - last_speed) > 20:
                         client.publish(topic=f'conviot/{device_name}/frena', payload=10, qos=1)
